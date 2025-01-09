@@ -1,57 +1,51 @@
 const WebSocket = require('ws')
 const port = process.env.PORT || 3000
 
-const wss = new WebSocket.Server({
+const wss = new WebSocket.Server({ 
   port,
   perMessageDeflate: false,
   clientTracking: true,
-  // 添加 CORS 支持
-  verifyClient: (info) => {
-    // 允许所有来源
-    return true
-  }
 })
 
-// 存储所有连接的客户端
-const clients = new Set()
+// 错误处理
+wss.on('error', (error) => {
+  console.error('WebSocket Server Error:', error)
+})
 
-// 广播消息给所有客户端
-function broadcast(message, sender) {
-  clients.forEach(client => {
-    if (client !== sender && client.readyState === WebSocket.OPEN) {
-      client.send(message)
-    }
-  })
-}
-
-// 添加心跳检测
-setInterval(() => {
-  wss.clients.forEach((client) => {
-    if (client.isAlive === false) {
-      return client.terminate()
-    }
-    client.isAlive = false
-    client.ping()
-  })
-}, 30000)
-
+// 连接处理
 wss.on('connection', (ws) => {
-  ws.isAlive = true
-  ws.on('pong', () => {
-    ws.isAlive = true
+  console.log('Client connected')
+  
+  ws.on('error', (error) => {
+    console.error('Client Error:', error)
   })
-
-  clients.add(ws)
-  console.log('New client connected, total:', clients.size)
-
+  
   ws.on('message', (message) => {
-    broadcast(message, ws)
+    try {
+      // 广播消息给所有客户端
+      wss.clients.forEach(client => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(message)
+        }
+      })
+    } catch (error) {
+      console.error('Message Error:', error)
+    }
   })
 
   ws.on('close', () => {
-    clients.delete(ws)
-    console.log('Client disconnected, total:', clients.size)
+    console.log('Client disconnected')
   })
 })
 
+// 服务器启动日志
 console.log(`WebSocket server is running on port ${port}`)
+
+// 错误处理
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error)
+})
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled Rejection:', error)
+}) 
