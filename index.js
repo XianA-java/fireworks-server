@@ -3,21 +3,12 @@ const http = require('http')
 
 // 创建 HTTP 服务器
 const server = http.createServer((req, res) => {
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.end('Server is healthy')
-  } else {
-    res.writeHead(426, { 'Content-Type': 'text/plain' })
-    res.end('Upgrade Required')
-  }
+  res.writeHead(200, { 'Content-Type': 'text/plain' })
+  res.end('WebSocket server is running')
 })
 
 // 在 HTTP 服务器上创建 WebSocket 服务器
-const wss = new WebSocket.Server({ 
-  server,
-  perMessageDeflate: false,
-  clientTracking: true
-})
+const wss = new WebSocket.Server({ server })
 
 // 连接处理
 wss.on('connection', (ws) => {
