@@ -11,8 +11,14 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server })
 
 // 连接处理
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
   console.log('Client connected')
+  
+  // 处理 CORS
+  const origin = req.headers.origin
+  if (origin) {
+    ws.send(`Connected to WebSocket server from ${origin}`)
+  }
   
   ws.on('error', (error) => {
     console.error('Client Error:', error)
