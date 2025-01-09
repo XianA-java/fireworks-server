@@ -1,15 +1,22 @@
 const WebSocket = require('ws')
-const port = process.env.PORT || 3000
+const http = require('http')
 
-const wss = new WebSocket.Server({ 
-  port,
-  perMessageDeflate: false,
-  clientTracking: true,
+// 创建 HTTP 服务器
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' })
+    res.end('Server is healthy')
+  } else {
+    res.writeHead(426, { 'Content-Type': 'text/plain' })
+    res.end('Upgrade Required')
+  }
 })
 
-// 错误处理
-wss.on('error', (error) => {
-  console.error('WebSocket Server Error:', error)
+// 在 HTTP 服务器上创建 WebSocket 服务器
+const wss = new WebSocket.Server({ 
+  server,
+  perMessageDeflate: false,
+  clientTracking: true
 })
 
 // 连接处理
@@ -38,10 +45,18 @@ wss.on('connection', (ws) => {
   })
 })
 
-// 服务器启动日志
-console.log(`WebSocket server is running on port ${port}`)
-
 // 错误处理
+wss.on('error', (error) => {
+  console.error('WebSocket Server Error:', error)
+})
+
+// 启动服务器
+const port = process.env.PORT || 3000
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`)
+})
+
+// 进程错误处理
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error)
 })
